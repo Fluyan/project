@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>vuejs练习</title>
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="vue.min.js"></script>
+</head>
+<style>
+*{
+    margin:0;
+padding: 0;
+}
+.filter_search {
+    width: 600px;
+    height: 40px;
+    background-color: #00b4ff;
+    margin: 0 auto;
+    border: 1px solid #00b4ff;
+    margin-top: 30px;
+    border-radius: 6px;
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    margin-left: -300px;
+    margin-top: -20px;
+}
+#filter_btn {
+    width: 97px;
+    height: 40px;
+    float: left;
+    position: relative;
+}
+#filter_btn p {
+    width: 86px;
+    height: 36px;
+    line-height: 36px;
+    color: #999999;
+    font-size: 14px;
+    cursor: pointer;
+    background: #ddf5ff;
+    margin-left: 2px;
+    margin-top: 2px;
+    text-align: left;
+    padding-left: 10px;
+}
+#filter_btn ul {
+    width: 86px;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    color: #fff;
+    cursor: pointer;
+    margin: 0 auto;
+    font-size: 14px;
+    position: absolute;
+    margin-top: 2px;
+}
+#filter_btn ul input {
+    display: none;
+}
+#filter_btn ul label {
+    display: block;
+    height: 30px;
+    border: 1px solid #00b4ff;
+    font-size: 14px;
+    color: #6b6b6b;
+    list-style: none;
+    line-height: 30px;
+    margin-left: 1px;
+    text-align: left;
+    padding-left: 10px;
+    width: 86px;
+    margin-top: -2px;
+    background: #fff;
+}
+.filter_empty {
+    width: 400px;
+    height: 36px;
+    border: none;
+    outline: medium;
+    padding-left: 7px;
+    font-size: 14px;
+    float: left;
+    margin-left: 3px;
+    margin-top: 2px;
+}
+.filter_search .search_btn {
+    cursor: pointer;
+    width: 73px;
+    height: 40px;
+    background: #fcc;
+    display: inline-block;
+    margin-left: 5px;
+}
+#load {
+    float: right;
+    position: relative;
+    top: -40px;
+    right: -80px;
+}
+#content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.filterMain {
+    max-width: 100%;
+    padding: 0 calc(50% - 600px);
+    height: auto;
+    border: 1px solid #ccc;
+    margin: 0 auto;
+    margin-top: 10px;
+    display: none;
+}
+#main{
+   width: 100%;
+   height:60px;
+   background: #202028;
+   border-bottom: 2px solid #cea600
+}
+#main .logo{
+  width:207px;
+  height: 60px;
+  background: url(images/ravenlogo.png) no-repeat;
+  margin-left:10px;
+}
+.all{
+  position: absolute;
+  left: 0;
+  top:62px;
+  width:100px;
+  height: 100%;
+  background: #fcc;
+}
+</style>
+<body>
+<div class="all"></div>
+<div id="main">
+<div class="logo"><!-- <img src="images/ravenlogo.png"> --></div>
+</div>
+<div id="app2" class="filter_search">
+    <div id="filter_btn">
+     <p @click="drop = !drop">{{ filterName[filter] }}检索</p>
+     <span class="arrow_down"></span>
+     <ul v-show='drop'>
+          <input type="radio" id="tsearch"  value="tables" v-model="filter"/>
+          <input type="radio" id="fasearch"  value="columns" v-model="filter"/>
+          <label for="tsearch">表检索</label>
+          <label for="fasearch">因子检索</label>
+     </ul>
+    </div>
+    <div id="filter_html">
+     <input type="text" name="keyword" placeholder="财富" class="filter_empty" @keydown.enter="search" v-model='keyword' />
+     <div class="search_btn" @click="search">搜索</div></div>
+    <div id="content">
+        <!-- top10数据展示 -->
+        <component :top10="top10" :is="filter"></component>
+    </div>
+</div>
+
+<script>
+var Tables = {
+    template:'#tables-template',
+    props:['top10'],
+}
+var Columns = {
+    template:'#columns-template',
+    props:['top10'],
+}
+var vm = new Vue({
+    el:"#app2",
+    data:{
+        drop:false,
+        filterName:{
+            tables:'表',
+            columns:'因子',
+        },
+        filter:'tables',
+        keyword:'',
+        data:{},
+        isLoading:false,
+    },
+    components:{
+        tables: Tables,
+        columns:Columns,
+      },
+
+    watch: {
+        filter: function () {
+          this.drop = false;
+          this.keyword = '';
+        }
+    },
+    computed: {
+        top10 : function () {
+          return this.data.top10 || null;
+        }
+    },
+    methods:{
+        search:function(){
+            console.log(this.keyword);
+            console.log(this.filter);
+            if(!! this.keyword){
+                var globalAPI = "http://11.240.65.43:8080/PinganBrain/";
+                var url = globalAPI + this.filter + "/search?keyword=" + this.keyword;
+                //保存用户搜索的Keyword
+                $.ajax({
+                  url: url,
+                  type: 'GET',
+                  data: null,
+                  success: function(){
+                    console.log(this.data)
+                  },
+                });
+            }
+        }
+    },
+    show:function (data) {
+      this.isLoading = false;
+      this.data = data;
+    },
+})
+</script>
+<script type="tables-template" id="tables-template">
+      <div class="filterMain">
+        <div class="infosTen">
+          <span>表质量top:10数据</span>
+          <a id="all" href="../totalContent.html" target="_blank">查看全部&gt;&gt;</a></div>
+        <table class="tableThead">
+          <tr>
+            <th style="width:15%;">数据库名</th>
+            <th style="width:35%">表名</th>
+            <th style="width:10%">因子数</th>
+            <th style="width:10%">数据量</th>
+            <th style="width:10%">饱和度</th>
+            <th style="width:10%">用户评分</th>
+            <th style="width:10%">详情</th></tr>
+          <tables v-for="(element,key) of top10" :element="element" :key="key"></tables>
+        </table>
+      </div>
+  </script>
+<script type="columns-template" id="columns-template">
+    <div class="filterMain">
+        <div class="infosTen">
+          <span>因子质量top:10数据</span>
+          <a id="all" href="../totalContent.html" target="_blank">查看全部&gt;&gt;</a></div>
+        <table class="tableThead" id="filterTable">
+          <tr>
+            <th style="width:15%;">表名</th>
+            <th style="width:15%">因子名</th>
+            <th style="width:20%">因子描述</th>
+            <th style="width:20%">空率</th>
+            <th style="width:20%">因子等级</th>
+            <th style="width:10%">众数占比</th></tr>
+          <columns v-for="(element,key) of top10" :element="element" :key="key"></columns>
+        </table>
+      </div>
+  </script>
+  <script type="table-template" id="table-template">
+    <tr>
+        <td style="width:15%;text-align:left;padding-left:20px;" :data-tooltip="element.attributes.dbName">{{element.attributes.dbName}}</td>
+        <td style="width:15%" :data-tooltip="element.attributes.tableName">{{element.attributes.tableName}}</td>
+        <td style="width:20%">{{element.attributes.comment}}</td>
+        <td style="width:10%">{{element.attributes.numRows}}</td>
+        <td style="width:10%">{{element.attributes.saturation}}</td>
+        <td style="width:10%">{{element.attributes.commentValue}}</td>
+        <td style="width:10%"><a @click="toDetail()">详情>></a></td>
+    </tr>
+  </script>
+  <script type="column-element-template" id="column-element-template">
+    <tr>
+      <td style="width:15%;text-align:left;padding-left:10px;">
+      {{element.attributes.dbName}}</td>
+      <td style="width:15%" :title="element.attributes.columnName">{{element.attributes.columnName}}</td>
+      <td style="width:20%" :title="element.attributes.comment">{{element.attributes.comment}}</td>
+      <td style="width:20%">
+        <div class="skillbar clearfix">
+          <div class="skillbar-bar" :style="{width:(element.attributes.nullRate*100).toFixed(2)+'%'}">
+          </div>
+        </div><em>{{(element.attributes.nullRate*100).toFixed(2)+"%"}}</em>
+      </td>
+      <td style="width:20%"><i><b class="active" :style="{width:element.attributes.level*17.6 + 'px'}"></b></i>{{element.attributes.level}}
+      </td>
+      <td style="width:10%">{{(element.attributes.modeFirstRate*100).toFixed(2) + '%'}}</td>
+    </tr>
+  </script>
+<div id="app">
+    <section class="listnews" v-for="message in data">
+        <div class="mecc">
+            <h2 class="mecctitle"  v-bind:title="message.num">
+                <a href="#" target="_blank">{{message.title}}</a>
+            </h2>
+            <address class="meccaddress">
+                <time>2017-05-25 16:07</time><a href="#">主题模版</a> 阅{{message.num}} 　
+            </address>
+        </div>
+        <p>{{message.info}}&nbsp;</p>
+    </section>
+</div>
+<script>
+data=[
+    {
+     "title":"标题1",
+     "info":"内容1",
+     "num":"123"
+    },
+    {
+     "title":"标题2",
+     "info":"内容2",
+     "num":"456"
+    },
+    {
+     "title":"标题3",
+     "info":"内容3",
+     "num":"789"
+    },
+    {
+     "title":"标题4",
+     "info":"内容4",
+     "num":"012"
+    },
+]
+var vm = new Vue({
+    el: '#app',
+    data: {
+        message: data,
+    },
+})
+</script>
+</body>
+</html>
